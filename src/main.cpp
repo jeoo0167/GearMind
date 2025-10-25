@@ -20,11 +20,11 @@ void setup() {
     Imu.begin();
 
     Gh.axisThresholds[0] = 25;
-    Gh.axisThresholds[1] = 15;
+    Gh.axisThresholds[1] = 10;
     Serial.println("X Y Z"); 
 }
 
-void showYPR()
+void PlotYPR()
 {
    // debug_msgs.msg(DebugMsgs::INFO,
    //             "Yaw: %.2f  Pitch: %.2f  Roll: %.2f",
@@ -46,6 +46,6 @@ void showYPR()
 void loop() {
     Imu.GetYPR(Imu.ypr);
     
-    //Gh.GestureTest();
-    showYPR();
+    Gh.GestureTest();
+    //PlotYPR();
 }

@@ -28,9 +28,6 @@ class IMU
         IMU() : debug_msgs("IMU.cpp") {}
     private:
         DebugMsgs debug_msgs;
-
-        float pitchFiltered = 0;
-        float alpha = 2.5;
 };
 
 #endif

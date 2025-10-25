@@ -15,6 +15,13 @@ class GestureHandler
 
     private:
         DebugMsgs debug_msgs;
+        bool getNone = false;
+        bool getForward = false;
+        bool getBackward = false;
+        bool getRight = false;
+        bool getLeft = false;
+        
+
 };
 
 #endif

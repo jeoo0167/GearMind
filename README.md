@@ -1,2 +1,2 @@
 # GearMind
-A proyecto to help peoples with disabilities
+A proyect to help peoples with disabilities

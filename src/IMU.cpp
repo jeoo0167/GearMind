@@ -20,8 +20,8 @@ void IMU::begin()
 
     if (devSatus == 0) {
         debug_msgs.msg(debug_msgs.INFO,"Calibrating using library functions...");
-        mpu.CalibrateAccel(15);
-        mpu.CalibrateGyro(15);
+        mpu.CalibrateAccel(5);
+        mpu.CalibrateGyro(5);
         mpu.PrintActiveOffsets();
         
 
