@@ -1,68 +1,65 @@
 #include "IMU.h"
 
-
-float IMU::ToRadian(float grade) {return (grade*M_PI)/180;}
-float IMU::ToGrade(float radian) {return (radian*180)/M_PI;}
+float IMU::Gyro_sens = 131.0;
+float IMU::Acc_sens = 16384.0; // ±2g
+float IMU::gyro[3] = {0};
+float IMU::acc[3] = {0};
+float IMU::ToRadian(float grade) { return (grade * M_PI) / 180.0; }
+float IMU::ToGrade(float radian) { return (radian * 180.0) / M_PI; }
 
 void IMU::begin()
 {
     mpu.initialize();
 
-    debug_msgs.msg(debug_msgs.INFO,"Testing connection . . .");
-    mpu.testConnection() ? debug_msgs.msg(debug_msgs.INFO,"Connection ok") : 
-    debug_msgs.msg(debug_msgs.ERROR,"Connection wrong");
-
-    debug_msgs.msg(debug_msgs.INFO,"Starting dmp . . .");
-    uint8_t devSatus = mpu.dmpInitialize();
-
-    delay(50);
-    
-
-    if (devSatus == 0) {
-        debug_msgs.msg(debug_msgs.INFO,"Calibrating using library functions...");
-        mpu.CalibrateAccel(5);
-        mpu.CalibrateGyro(5);
-        mpu.PrintActiveOffsets();
-        
-
-    mpu.setDMPEnabled(true);
-    dmpReady = true;
-    }
+    debug_msgs.msg(debug_msgs.INFO, "Testing connection . . .");
+    if (mpu.testConnection())
+        debug_msgs.msg(debug_msgs.INFO, "Connection OK");
     else
+        debug_msgs.msg(debug_msgs.ERROR, "Connection FAILED");
+
+    delay(100);
+
+    debug_msgs.msg(debug_msgs.INFO, "Calibrating offsets (keep still)");
+
+    long accSum[3] = {0}, gyroSum[3] = {0};
+    for (int i = 0; i < calib_rounds; i++)
     {
-        debug_msgs.msg(debug_msgs.ERROR,"Falied to start dmp");
-        Serial.println(devSatus);
+        int16_t ax, ay, az, gx, gy, gz;
+        mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+        accSum[0] += ax;
+        accSum[1] += ay;
+        accSum[2] += az;
+        gyroSum[0] += gx;
+        gyroSum[1] += gy;
+        gyroSum[2] += gz;
+
+        if (i % 100 == 0) Serial.print(".");
+        delay(5);
     }
 
-    mpu.resetFIFO();
-    delay(100);
+    for (int i = 0; i < 3; i++)
+    {
+        accOffset[i] = (float)accSum[i] / calib_rounds;
+        gyroOffset[i] = (float)gyroSum[i] / calib_rounds;
+    }
+
+    // Ajustar el eje Z del acelerómetro para compensar la gravedad
+    accOffset[2] -= Acc_sens;  // si el sensor está quieto con Z hacia arriba
+
+    Serial.println("\nCalibration done!");
 }
 
-
-void IMU::GetYPR(float *ypr, int n)
+void IMU::GetMotion()
 {
-    if (!dmpReady) return;  
-    
-    uint16_t packetSize = mpu.dmpGetFIFOPacketSize();
-    uint16_t fifoCount = mpu.getFIFOCount();
+    int16_t ax, ay, az, gx, gy, gz;
+    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-    if (fifoCount < packetSize) return;
+    acc[0] = (ax - accOffset[0]) / Acc_sens;
+    acc[1] = (ay - accOffset[1]) / Acc_sens;
+    acc[2] = (az - accOffset[2]) / Acc_sens;
 
-    if (fifoCount > 1024) {
-        mpu.resetFIFO();
-        debug_msgs.msg(debug_msgs.WARN, "FIFO overflow !");
-        return;
-    }
-
-    if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
-        mpu.dmpGetQuaternion(&q, fifoBuffer);
-        mpu.dmpGetGravity(&gravity, &q);
-        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-
-        // Convertir de radianes a grados
-        for (int i = 0; i < n; i++) {
-            ypr[i] = ToGrade(ypr[i]);
-        }
-    }
-
+    gyro[0] = (gx - gyroOffset[0]) / Gyro_sens;
+    gyro[1] = (gy - gyroOffset[1]) / Gyro_sens;
+    gyro[2] = (gz - gyroOffset[2]) / Gyro_sens;
 }

@@ -3,71 +3,47 @@
 
 auto& Network_manager = NetworkManager::getInstance();
 
-// Máquina de estados para el movimiento
-enum GestureState {
-    STATE_NONE,
-    STATE_FORWARD,
-    STATE_BACKWARD
-};
+const unsigned long debounceTime = 200;   // ms para confirmar una dirección
+const float hysteresis = 0.05;            // margen adicional para estabilidad
 
-GestureState currentState = STATE_NONE;
-
-// Pequeña zona muerta para evitar cambios por ruido
-const float HYSTERESIS = 10.0;  // grados extra
+// --- VARIABLES ESTÁTICAS (persisten entre llamadas) ---
+static String lastDirection = "NONE";
+static unsigned long lastChangeTime = 0;
 
 void GestureHandler::GestureTest()
 {
-    float pitch = IMU::ypr[1];  // eje de inclinación adelante/atrás
-    float yaw   = IMU::ypr[0];  // eje lateral izquierda/derecha
+    String currentDirection = "NONE";
 
-    // --- CONTROL LATERAL (Yaw) ---
-    if (yaw >= axisThresholds[0]) {
-        debug_msgs.msg(debug_msgs.INFO, "Right");
-        Network_manager.Send("Right", 100);
-    } 
-    else if (yaw <= -axisThresholds[0]) {
-        debug_msgs.msg(debug_msgs.INFO, "Left");
-        Network_manager.Send("Left", 100);
-    } 
-    else {
-        // Solo enviamos NONE lateral si no hay movimiento vertical
-        if (currentState == STATE_NONE) {
-            debug_msgs.msg(debug_msgs.INFO, "NONE (Lateral)");
-            Network_manager.Send("NONE", 100);
+    // --- EVALUAR CON HISTERESIS ---
+    if (IMU::acc[2] >= (zThreshold[0] + hysteresis))
+        currentDirection = "FORWARD";
+    else if (IMU::acc[2] <= -(zThreshold[1] + hysteresis))
+        currentDirection = "BACKWARD";
+    else if (IMU::acc[1] >= (yThreshold[0] + hysteresis))
+        currentDirection = "LEFT";
+    else if (IMU::acc[1] <= -(yThreshold[1] + hysteresis))
+        currentDirection = "RIGHT";
+    else
+        currentDirection = "NONE";
+
+    // --- FILTRO ANTIRREBOTE TEMPORAL ---
+    unsigned long now = millis();
+
+    if (currentDirection != lastDirection)
+    {
+        // Solo cambiar si ha pasado suficiente tiempo con la nueva dirección
+        if (now - lastChangeTime > debounceTime)
+        {
+            lastDirection = currentDirection;
+            lastChangeTime = now;
+
+            debug_msgs.msg(debug_msgs.INFO, currentDirection.c_str());
         }
     }
-
-    // --- CONTROL VERTICAL (Pitch) ---
-    switch (currentState)
+    else
     {
-        case STATE_NONE:
-            if (pitch >= axisThresholds[1] + HYSTERESIS) {
-                debug_msgs.msg(debug_msgs.INFO, "Forward");
-                Network_manager.Send("Forward", 100);
-                currentState = STATE_FORWARD;
-            }
-            else if (pitch <= -axisThresholds[1] - HYSTERESIS) {
-                debug_msgs.msg(debug_msgs.INFO, "Backward");
-                Network_manager.Send("Backward", 100);
-                currentState = STATE_BACKWARD;
-            }
-            break;
-
-        case STATE_FORWARD:
-            if (pitch <= -HYSTERESIS) {  // Regresa cerca de 0 o inclinación opuesta
-                debug_msgs.msg(debug_msgs.INFO, "None (Forward OFF)");
-                Network_manager.Send("None", 100);
-                currentState = STATE_NONE;
-            }
-            break;
-
-        case STATE_BACKWARD:
-            if (pitch >= HYSTERESIS) {
-                debug_msgs.msg(debug_msgs.INFO, "None (Backward OFF)");
-                Network_manager.Send("None", 100);
-                currentState = STATE_NONE;
-            }
-            break;
+        // Si se mantiene igual, actualiza tiempo base
+        lastChangeTime = now;
     }
 }
 

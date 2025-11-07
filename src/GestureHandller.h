@@ -11,17 +11,13 @@ class GestureHandler
     public:
         GestureHandler() : debug_msgs("GestureHandler.h") {}
         void GestureTest();
-        int axisThresholds[3] = {0,0,0};  
-
+        float xThreshold[2];
+        float yThreshold[2];
+        float zThreshold[2];
+        float hysteresis = 0.1;
     private:
         DebugMsgs debug_msgs;
-        bool getNone = false;
-        bool getForward = false;
-        bool getBackward = false;
-        bool getRight = false;
-        bool getLeft = false;
         
-
 };
 
 #endif
