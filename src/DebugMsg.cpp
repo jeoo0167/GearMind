@@ -28,7 +28,7 @@ void DebugMsgs::msg(msg_type type, const char* format, ...) {
     char buffer[128]; // buffer temporal
     va_list args;
     va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args); // similar a printf
+    vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
     if (useColors) Serial.print(typeToColor(type));

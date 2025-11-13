@@ -44,8 +44,7 @@ void IMU::begin()
         gyroOffset[i] = (float)gyroSum[i] / calib_rounds;
     }
 
-    // Ajustar el eje Z del acelerómetro para compensar la gravedad
-    accOffset[2] -= Acc_sens;  // si el sensor está quieto con Z hacia arriba
+    accOffset[2] -= Acc_sens;
 
     Serial.println("\nCalibration done!");
 }

@@ -35,7 +35,7 @@ class DebugMsgs {
         template <typename... Args>
         static void plot(const String names[], const Args&... values)
         {
-            const String vals[] = { String(values)... };  // convierte todos a String
+            const String vals[] = { String(values)... };
             constexpr size_t n = sizeof...(values);
 
             Serial.print(">");
