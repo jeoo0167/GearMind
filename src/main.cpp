@@ -5,7 +5,7 @@
 #include "Sounds.h"
 #include "String"
 
-IMU Imu;//change
+IMU Imu;
 SMP smp;
 Sounds buzzer;
 
