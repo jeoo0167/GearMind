@@ -7,6 +7,8 @@ float IMU::acc[3] = {0};
 float IMU::ToRadian(float grade) { return (grade * M_PI) / 180.0; }
 float IMU::ToGrade(float radian) { return (radian * 180.0) / M_PI; }
 
+extern Sounds buzzer;
+
 void IMU::begin()
 {
     mpu.initialize();
@@ -34,7 +36,11 @@ void IMU::begin()
         gyroSum[1] += gy;
         gyroSum[2] += gz;
 
-        if (i % 100 == 0) Serial.print(".");
+        if (i % 100 == 0) 
+        {
+            Serial.print(".");
+            buzzer.play_Sound1();
+        }
         delay(5);
     }
 
@@ -46,6 +52,7 @@ void IMU::begin()
 
     accOffset[2] -= Acc_sens;
 
+    buzzer.play_Sound2();
     Serial.println("\nCalibration done!");
 }
 

@@ -2,6 +2,7 @@
 #define SOUNDS_H
 
 #include <Arduino.h>
+#include <math.h>
 
 class Sounds
 {

@@ -20,7 +20,7 @@ const int ADCpin = 36;
 float GetBatery()
 {
     int raw = analogRead(ADCpin);
-    float v = raw / 4095.0 * 3.3;
+    float v = (raw / 4095.0) * 3.3 *2;
     return v;
 }
 
@@ -36,7 +36,10 @@ void setup() {
     smp.zThreshold[1] = -0.88;
     smp.yThreshold[0] = 0.30;
     smp.yThreshold[1] = 0.40;
-    debug_msgs.msg(debug_msgs.INFO,"Battery %.2f:",GetBatery());
+
+    String voltage = "V:" + String(GetBatery());
+    esp_cmd_t pkt = network_manager.CreatePacket(const_cast<char*>(voltage.c_str()), DATA);
+    network_manager.Send(&pkt, 200);
 
     Serial.println("X Y Z");
 }
@@ -50,6 +53,11 @@ void PlotYPR()
 }
 
 void loop() {
+    if(GetBatery() <= 3.3)
+    {
+        debug_msgs.msg(debug_msgs.WARN, "Batería baja!");
+        esp_deep_sleep_start();
+    }
     Imu.GetMotion();
     
     smp.GetMov();
@@ -58,3 +66,11 @@ void loop() {
 }
 
 
+// -Optimizar codigo:
+//      -funcion create packet en network manager.h
+//Mejoras:
+// -añadir sonidos a robot driver
+// -modulacion pwm
+// -sistema de gestos
+// -App web
+// -sonidos

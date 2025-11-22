@@ -32,7 +32,8 @@ void SMP::GetMov()
             lastChangeTime = now;
 
             debug_msgs.msg(debug_msgs.INFO, currentDirection.c_str());
-            Network_manager.Send(currentDirection.c_str(),debounceTime);
+            esp_cmd_t pkt = Network_manager.CreatePacket(const_cast<char*>(currentDirection.c_str()), COMMAND);
+            Network_manager.Send(&pkt, 100);
             if(currentDirection != "NONE") buzzer.play_Sound1();
         }
     }
