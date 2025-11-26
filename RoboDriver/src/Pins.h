@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+
+
 class Pins 
 {
     private:
@@ -27,6 +29,10 @@ class Pins
         int IN4 = 19;
         int STBY = 15;
 
+        const int ch1 = 1;
+        const int ch2 = 2;
+        const int freq = 2000;
+        const int resolution = 8;
 };
 
 #endif

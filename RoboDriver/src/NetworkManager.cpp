@@ -1,5 +1,7 @@
 #include "NetworkManager.h"
 
+int NetworkManager::failCount = 0;
+
 void NetworkManager::Begin()
 {
     WiFi.mode(WIFI_STA);
@@ -23,7 +25,6 @@ void NetworkManager::Begin()
         return;
     }
 
-    // Inicializar flags
     macLearned = false;
     connected = false;
 
@@ -101,9 +102,6 @@ void NetworkManager::onReceive(const uint8_t *mac, const uint8_t *data, int len)
 
 void NetworkManager::onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    static int failCount = 0;
-    const int MAX_FAILS = 5;
-
     if (status == ESP_NOW_SEND_SUCCESS)
     {
         failCount = 0;
@@ -206,6 +204,6 @@ void NetworkManager::heartBeatCallback(void *pvParam)
             Serial.println("[NetworkManager][INFO] Heartbeat enviado");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

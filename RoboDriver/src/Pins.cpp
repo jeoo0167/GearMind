@@ -11,10 +11,14 @@ void Pins::init()
     pinMode(IN4,OUTPUT);
     pinMode(23,OUTPUT);
 
-    digitalWrite(PWMA,HIGH);
-    digitalWrite(PWMB,HIGH);
     digitalWrite(STBY,HIGH);
     digitalWrite(23,LOW);
+
+    ledcSetup(ch1, freq, resolution);
+    ledcSetup(ch2, freq, resolution);
+
+    ledcAttachPin(PWMA, ch1);
+    ledcAttachPin(PWMB, ch2);
 }
 
 Pins* Pins::instance = nullptr;

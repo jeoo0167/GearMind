@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <Arduino.h>
 #include <Motors.h>
+#include "pins.h"
 
 class NetworkManager
 {
@@ -19,6 +20,9 @@ public:
     void Begin();
     void commandHandler(const char* command);
     
+    static int failCount;
+    const int MAX_FAILS = 3;
+    const int dataDelay = 100;
 
 private:
 

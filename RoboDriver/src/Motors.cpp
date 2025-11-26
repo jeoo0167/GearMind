@@ -1,41 +1,53 @@
 #include "Motors.h"
 
+extern Pins* pins_;
+
 void Motors::Forward()
 {
-    digitalWrite(Pins::getInstance()->IN1,HIGH);
-    digitalWrite(Pins::getInstance()->IN2,LOW);
-    digitalWrite(Pins::getInstance()->IN3,HIGH);
-    digitalWrite(Pins::getInstance()->IN4,LOW);
+    setSpeed(linearSpeed);
+    digitalWrite(pins_->IN1,HIGH);
+    digitalWrite(pins_->IN2,LOW);
+    digitalWrite(pins_->IN3,HIGH);
+    digitalWrite(pins_->IN4,LOW);
 }
 
 void Motors::Backward()
 {
-    digitalWrite(Pins::getInstance()->IN1,LOW);
-    digitalWrite(Pins::getInstance()->IN2,HIGH);
-    digitalWrite(Pins::getInstance()->IN3,LOW);
-    digitalWrite(Pins::getInstance()->IN4,HIGH);
+    setSpeed(linearSpeed);
+    digitalWrite(pins_->IN1,LOW);
+    digitalWrite(pins_->IN2,HIGH);
+    digitalWrite(pins_->IN3,LOW);
+    digitalWrite(pins_->IN4,HIGH);
 }
 
 void Motors::Left()
 {
-    digitalWrite(Pins::getInstance()->IN1,LOW);
-    digitalWrite(Pins::getInstance()->IN2,HIGH);
-    digitalWrite(Pins::getInstance()->IN3,HIGH);
-    digitalWrite(Pins::getInstance()->IN4,LOW);
+    setSpeed(angularSpeed);
+    digitalWrite(pins_->IN1,LOW);
+    digitalWrite(pins_->IN2,HIGH);
+    digitalWrite(pins_->IN3,HIGH);
+    digitalWrite(pins_->IN4,LOW);
 }
 
 void Motors::Right()
 {
-    digitalWrite(Pins::getInstance()->IN1,HIGH);
-    digitalWrite(Pins::getInstance()->IN2,LOW);
-    digitalWrite(Pins::getInstance()->IN3,LOW);
-    digitalWrite(Pins::getInstance()->IN4,HIGH);
+    setSpeed(angularSpeed);
+    digitalWrite(pins_->IN1,HIGH);
+    digitalWrite(pins_->IN2,LOW);
+    digitalWrite(pins_->IN3,LOW);
+    digitalWrite(pins_->IN4,HIGH);
 }
 
 void Motors::Stop()
 {
-    digitalWrite(Pins::getInstance()->IN1,LOW);
-    digitalWrite(Pins::getInstance()->IN2,LOW);
-    digitalWrite(Pins::getInstance()->IN3,LOW);
-    digitalWrite(Pins::getInstance()->IN4,LOW);
+    digitalWrite(pins_->IN1,LOW);
+    digitalWrite(pins_->IN2,LOW);
+    digitalWrite(pins_->IN3,LOW);
+    digitalWrite(pins_->IN4,LOW);
+}
+
+void Motors::setSpeed(int speed)
+{
+    ledcWrite(pins_->ch1, speed);
+    ledcWrite(pins_->ch2, speed);
 }

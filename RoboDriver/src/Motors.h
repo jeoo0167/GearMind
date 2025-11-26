@@ -11,6 +11,10 @@ class Motors
         void Left();
         void Right();
         void Stop();
+        void setSpeed(int speed);
+
+        float linearSpeed = 178.0;
+        float angularSpeed = 115.0;
 };
 
 #endif
