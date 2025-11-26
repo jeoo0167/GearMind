@@ -5,6 +5,7 @@
 #include <Wire.h>
 #include <MPU6050.h>
 #include "DebugMsg.h"
+#include "Sounds.h"
 
 class IMU {
 public:
