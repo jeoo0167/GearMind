@@ -2,6 +2,8 @@
 #define SOUNDS_H
 
 #include <Arduino.h>
+#include <math.h>
+#include "IMU.h"
 
 class Sounds
 {

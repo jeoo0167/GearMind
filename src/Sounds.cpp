@@ -16,3 +16,14 @@ void Sounds::play_Sound1()
   ledcWriteTone(_channel, 0);    
   delay(500);
 }
+
+void Sounds::play_Sound2()
+{
+  for (int x =0;x<=35;x++)
+  {
+    float exp_tone = 100 + pow(x,2);
+    ledcWriteTone(_channel,exp_tone);
+    delay(25);
+  }
+  ledcWriteTone(_channel,0);
+}

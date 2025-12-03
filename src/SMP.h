@@ -5,12 +5,13 @@
 #include "Arduino.h"
 #include "NetworkManager.h"
 #include "DebugMsg.h"
+#include "modeManager.h"
 
 class SMP
 {
     public:
         SMP() : debug_msgs("SMP.h") {}
-        void GetMov();
+        String GetMov();
         float xThreshold[2];
         float yThreshold[2];
         float zThreshold[2];
