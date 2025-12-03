@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <Arduino.h>
 #include "DebugMsg.h"
+#include "Imu.h"
 
 enum msg_type : uint8_t
 {
@@ -45,7 +46,6 @@ private:
     esp_cmd_t msg;
     
     DebugMsgs debug_msgs;
-    unsigned long lastTime = 0;
     bool macLearned = false;
 
     NetworkManager(const NetworkManager &) = delete;

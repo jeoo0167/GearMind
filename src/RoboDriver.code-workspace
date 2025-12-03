@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../RoboDriver"
+		},
+		{
+			"name": "GearMind",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}

@@ -9,7 +9,7 @@ String SMP::lastDirection = "NONE";
 String SMP::currentDirection = "NONE";
 unsigned long SMP::lastChangeTime = 0;
 
-void SMP::GetMov()
+String SMP::GetMov()
 {
     if (IMU::acc[2] >= (zThreshold[0] + hysteresis))
         currentDirection = "Forward";
@@ -30,16 +30,20 @@ void SMP::GetMov()
         {
             lastDirection = currentDirection;
             lastChangeTime = now;
-
-            debug_msgs.msg(debug_msgs.INFO, currentDirection.c_str());
-            esp_cmd_t pkt = Network_manager.CreatePacket(const_cast<char*>(currentDirection.c_str()), COMMAND);
-            Network_manager.Send(&pkt, 100);
-            if(currentDirection != "NONE") buzzer.play_Sound1();
+            
+            if(ModeManager::currentMode == ModeManager::MOVE)
+            {
+                debug_msgs.msg(debug_msgs.INFO, currentDirection.c_str());
+                esp_cmd_t pkt = Network_manager.CreatePacket(const_cast<char*>(currentDirection.c_str()), COMMAND);
+                Network_manager.Send(&pkt, 100);
+                if(currentDirection != "NONE") buzzer.play_Sound1();
+            }
         }
     }
     else
     {
         lastChangeTime = now;
     }
+    return currentDirection;
 }
 

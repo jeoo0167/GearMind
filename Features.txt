@@ -1,0 +1,20 @@
+Config-Mode:
+
+configurar:
+    theresholds
+    zona muerta
+    histeresis
+    resetear a valores de fabrica
+    mostrar bateria
+    controlar la silla por udp
+    litlefs y json para guardar configuraciones
+
+Normal mode:
+    movimiento por la imu
+    buzer pwm
+    algoritmo de movimientos
+    deteccion de caidas -proximamente
+    sistema de calibracion mejorado -proximamente
+     
+Inclinar cabaza adelante para activar modo conduccion
+Inclinar cabaza hacia atras para activar modo configuracion

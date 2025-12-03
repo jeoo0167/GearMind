@@ -13,6 +13,7 @@ public:
 
     void begin();
     void GetMotion();
+    bool timer(unsigned long ms);
     
     static float ToRadian(float grade);
     static float ToGrade(float radian);

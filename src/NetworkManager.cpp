@@ -1,5 +1,6 @@
 #include "NetworkManager.h"
 
+extern IMU Imu;
 bool NetworkManager::connected = false;
 
 NetworkManager::NetworkManager() : debug_msgs("NetworkManager.cpp") {}
@@ -49,11 +50,8 @@ void NetworkManager::Begin(const uint8_t receiverMac[])
 
 void NetworkManager::Send(const esp_cmd_t *packet, unsigned long data_delay)
 {
-    unsigned long time = millis();
-
-    if (time - lastTime >= data_delay)
+    if(Imu.timer(data_delay))
     {
-        lastTime = time;
         memcpy(&msg, packet, sizeof(esp_cmd_t));
 
         esp_err_t result = esp_now_send(mac_addr, (uint8_t *)&msg, sizeof(msg));

@@ -69,3 +69,23 @@ void IMU::GetMotion()
     gyro[1] = (gy - gyroOffset[1]) / Gyro_sens;
     gyro[2] = (gz - gyroOffset[2]) / Gyro_sens;
 }
+
+bool IMU::timer(unsigned long ms)
+{
+    static unsigned long start = 0;
+    static bool started = false;
+
+    if(!started)
+    {
+        start = millis();
+        started = true;
+    }
+
+    if(millis() - start >= ms)
+    {
+        started = false;
+        return true;
+    }
+
+    return false;
+}

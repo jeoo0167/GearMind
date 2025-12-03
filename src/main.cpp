@@ -3,6 +3,7 @@
 #include "NetworkManager.h"
 #include "DebugMsg.h"
 #include "Sounds.h"
+#include "modeManager.h"
 #include "String"
 
 IMU Imu;
@@ -16,6 +17,10 @@ uint8_t mac[6] = {0xF8, 0xB3, 0xB7, 0x20, 0x31, 0x18};
 
 const int ADCpin = 36;
 
+//--------------------------Timers----------------------------
+unsigned long noneTimer = 5000;
+unsigned long forwardTimer = 2500;
+unsigned long backwardTimer = 10000;
 
 float GetBatery()
 {
@@ -25,6 +30,7 @@ float GetBatery()
 }
 
 void setup() {
+
     buzzer.begin(17);
     Serial.begin(115200);
     network_manager.Begin(mac);
@@ -37,10 +43,12 @@ void setup() {
     smp.yThreshold[0] = 0.30;
     smp.yThreshold[1] = 0.40;
 
+    ModeManager::getInstance().setTimers(forwardTimer,backwardTimer);
+    /*
     String voltage = "V:" + String(GetBatery());
     esp_cmd_t pkt = network_manager.CreatePacket(const_cast<char*>(voltage.c_str()), DATA);
     network_manager.Send(&pkt, 200);
-
+    */
     Serial.println("X Y Z");
 }
 
@@ -52,25 +60,42 @@ void PlotYPR()
     delay(10);
 }
 
+unsigned long startTime = 0;
+bool active = false;
+
 void loop() {
+
     if(GetBatery() <= 3.3)
     {
         debug_msgs.msg(debug_msgs.WARN, "Batería baja!");
         esp_deep_sleep_start();
     }
+
     Imu.GetMotion();
+    String direccion = smp.GetMov();
     
-    smp.GetMov();
+    if(!ModeManager::getInstance().selected)
+    {
+        ModeManager::getInstance().setMode();
+        return;
+    }
+
+    if((ModeManager::getInstance().currentMode == ModeManager::MOVE))
+    {
+        if((direccion == "NONE") && (Imu.timer(noneTimer)))
+        {
+            ModeManager::getInstance().currentMode = ModeManager::NONE;
+            ModeManager::getInstance().selected = false;
+        }
+    }
     //PlotYPR();
     delay(10);
 }
 
 
-// -Optimizar codigo:
-//      -funcion create packet en network manager.h
-//Mejoras:
-// -añadir sonidos a robot driver
-// -modulacion pwm
-// -sistema de gestos
-// -App web
-// -sonidos
+//corregir netwrk manager para modo move
+//trancision move->none
+
+//Mejorar sistema de calibración
+//agregar alarma de deteccion de caidas
+//imu como clase estatica con sigleton
