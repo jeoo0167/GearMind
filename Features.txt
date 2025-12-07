@@ -18,3 +18,4 @@ Normal mode:
      
 Inclinar cabaza adelante para activar modo conduccion
 Inclinar cabaza hacia atras para activar modo configuracion
+tecnologia captive portals

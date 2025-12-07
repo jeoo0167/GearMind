@@ -1,4 +1,5 @@
 #include "NetworkManager.h"
+#define TRACE()  Serial.printf("[TRACE] %s:%d\n", __FUNCTION__, __LINE__);
 
 extern IMU Imu;
 bool NetworkManager::connected = false;
@@ -7,8 +8,12 @@ NetworkManager::NetworkManager() : debug_msgs("NetworkManager.cpp") {}
 
 void NetworkManager::Begin(const uint8_t receiverMac[])
 {
+    dnsServer.stop();
+    WiFi.disconnect(true);
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_OFF);
+    delay(100);
     WiFi.mode(WIFI_STA);
-
     if (esp_now_init() != ESP_OK)
     {
         debug_msgs.msg(debug_msgs.ERROR, "Failed to start ESP-NOW");
@@ -22,6 +27,7 @@ void NetworkManager::Begin(const uint8_t receiverMac[])
     memcpy(peer_info.peer_addr, receiverMac, 6);
     peer_info.channel = 0;
     peer_info.encrypt = false;
+    espnowEnable = true;
 
     if (esp_now_add_peer(&peer_info) != ESP_OK)
     {
@@ -50,7 +56,9 @@ void NetworkManager::Begin(const uint8_t receiverMac[])
 
 void NetworkManager::Send(const esp_cmd_t *packet, unsigned long data_delay)
 {
-    if(Imu.timer(data_delay))
+    if(!espnowEnable) return;
+
+    if(Imu.timer(data_delay) && espnowEnable)
     {
         memcpy(&msg, packet, sizeof(esp_cmd_t));
 
@@ -66,15 +74,19 @@ void NetworkManager::Send(const esp_cmd_t *packet, unsigned long data_delay)
 
 esp_cmd_t NetworkManager::CreatePacket(const char *cmd, msg_type type)
 {
-    esp_cmd_t packet;
-    strncpy(packet.cmd, cmd, sizeof(packet.cmd));
-    packet.cmd[sizeof(packet.cmd) - 1] = '\0';
-    packet.type = type;
-    return packet;
+    if(espnowEnable)
+    {
+        esp_cmd_t packet;
+        strncpy(packet.cmd, cmd, sizeof(packet.cmd));
+        packet.cmd[sizeof(packet.cmd) - 1] = '\0';
+        packet.type = type;
+        return packet;
+    }
 }
 
 void NetworkManager::onReceiveStatic(const uint8_t *mac, const uint8_t *data, int len)
 {
+    if(!NetworkManager::getInstance().espnowEnable) return;
     NetworkManager::getInstance().onReceive(mac, data, len);
 }
 
@@ -146,6 +158,10 @@ void NetworkManager::getMsg(void *pvParam)
     NetworkManager *self = reinterpret_cast<NetworkManager *>(pvParam);
     esp_cmd_t packet;
 
+    while (!self->espnowEnable) {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+
     while (true)
     {
         if (self->msgQueue && xQueueReceive(self->msgQueue, &packet, portMAX_DELAY) == pdTRUE)
@@ -173,12 +189,143 @@ void NetworkManager::MessageHandller(const esp_cmd_t &packet)
             break;
 
         case COMMAND:
-            Serial.print("[GORRA] Command (from robot?): ");
-            Serial.println(packet.cmd);
-            break;
+        {
+            String msg = String(packet.cmd);
+
+            if (msg == "Ready") {
+                msgReceived = true;
+                Serial.println("[GORRA] Receiver ready!");
+            }
+
+            if (msg.startsWith("IP=")) {
+                external_ip = msg.substring(3); // si external_ip es String
+                Serial.print("[GORRA] External IP received: ");
+                Serial.println(external_ip);
+            }
+        }
+        break;
 
         default:
             Serial.println("[GORRA] Unknown packet type");
             break;
     }
+}
+
+
+void NetworkManager::serverInit(const char *ssid, const char *password)
+{
+    esp_cmd_t pck[4]; 
+    pck[0] = CreatePacket("SERVER", COMMAND); 
+    pck[1] = CreatePacket(ssid, COMMAND); 
+    pck[2] = CreatePacket(password, COMMAND); 
+    pck[3] = CreatePacket("END", COMMAND);
+
+    for (int i = 0; i < 4; i++) {
+        Send(&pck[i], 0);  // envío inmediato
+        delay(20);
+    }
+
+    espnowEnable = false;
+    esp_now_unregister_recv_cb();
+    esp_now_unregister_send_cb();
+    esp_now_deinit();
+
+    macLearned = false;
+    connected = false;
+    msgReceived = false;
+    external_ip = "";
+    if (msgQueue) xQueueReset(msgQueue);
+
+    WiFi.mode(WIFI_OFF);
+    delay(100);
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ssid, password);
+
+    apIP = WiFi.softAPIP();
+
+    dnsServer.start(53, "*", apIP);
+
+    server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->send(LittleFS, "/index.html", "text/html");
+    });
+
+    server.on("/generate_204", HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", "OK");
+    });
+
+    server.on("/fwlink", HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->redirect("/");
+    });
+
+    server.on("/hotspot-detect.html", HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->redirect("/");
+    });
+
+    server.on("/captive.txt", HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->redirect("/");
+    });
+
+    server.serveStatic("/", LittleFS, "/");
+
+    // Redirigir TODO lo demás al portal
+    server.onNotFound([](AsyncWebServerRequest *request){
+        request->redirect("/");
+    });
+
+    server.on("/config.json", HTTP_GET, [](AsyncWebServerRequest *request){
+        Serial.println("GET /config.json");
+
+        if (!LittleFS.exists("/config.json")) {
+            request->send(404, "application/json", "{\"error\":\"config.json not found\"}");
+            return;
+        }
+
+        request->send(LittleFS, "/config.json", "application/json");
+    });
+
+
+    server.on("/saveConfig", HTTP_POST, 
+        [](AsyncWebServerRequest *request){},
+        NULL,
+        [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) 
+        {
+            Serial.println("POST /saveConfig recibido");
+
+            String body = "";
+            for (size_t i = 0; i < len; i++) body += (char)data[i];
+
+            Serial.println("Datos recibidos:");
+            Serial.println(body);
+
+            File f = LittleFS.open("/config.json", "w");
+            if (!f) {
+                request->send(500, "application/json", "{\"status\":\"error saving file\"}");
+                return;
+            }
+            f.print(body);
+            f.close();
+
+            request->send(200, "application/json", "{\"status\":\"ok\"}");
+        }
+    );
+
+
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
+
+    server.begin();
+}
+
+bool NetworkManager::SendUdp(String udpMessage)
+{
+    if(msgReceived && external_ip.length() >0)
+    {
+        udp.beginPacket(external_ip.c_str(), port);
+        udp.print(udpMessage);
+        udp.endPacket();
+        return true;
+    }
+    else {return false;}
+
 }

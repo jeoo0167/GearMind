@@ -31,6 +31,8 @@ String SMP::GetMov()
             lastDirection = currentDirection;
             lastChangeTime = now;
             
+            if(!Network_manager.espnowEnable) return currentDirection;
+
             if(ModeManager::currentMode == ModeManager::MOVE)
             {
                 debug_msgs.msg(debug_msgs.INFO, currentDirection.c_str());

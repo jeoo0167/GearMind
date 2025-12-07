@@ -1,0 +1,22 @@
+{
+    "network": {
+        "ssid": "DriveLink Network",
+        "password": "12345678",
+        "sounds_enabled": true
+    },
+    "thresholds": [
+        1.2,
+        -0.88,
+        0.30,
+        0.40
+    ],
+    "timers": [
+        5000,
+        2500,
+        10000
+    ],
+    "speeds": [
+        178,
+        0
+    ]
+}

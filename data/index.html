@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Control Drive Link</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<button id="panelBtn">Panel</button>
+
+<div id="sidePanel" aria-hidden="true">
+  <h2>Control Remoto</h2>
+
+  <div class="nav-grid">
+    <div></div>
+    <button class="small-control" data-cmd="forward">Forward</button>
+    <div></div>
+
+    <button class="small-control" data-cmd="left">Left</button>
+    <button class="small-control stopPulse" data-cmd="stop">STOP</button>
+    <button class="small-control" data-cmd="right">Right</button>
+
+    <div></div>
+    <button class="small-control" data-cmd="back">Back</button>
+    <div></div>
+  </div>
+
+  <p style="margin-top:15px;">Nivel de batería: <span id="batteryLevel">85%</span></p>
+</div>
+
+
+<div class="card">
+  <h2>Red WiFi</h2>
+  <label>Nombre de la red:</label>
+  <input id="ssidInput" type="text" placeholder="Nuevo SSID">
+
+  <label>Contraseña:</label>
+  <input id="passwordInput" type="password" placeholder="Nueva contraseña">
+</div>
+
+<div class="card">
+  <h2>Sonidos</h2>
+  <div class="toggleBox">
+    <label>Sonidos activados</label>
+    <input id="soundsToggle" type="checkbox">
+  </div>
+</div>
+
+<div class="card">
+  <h2>Thresholds</h2>
+  <div class="sliderBox"><input type="range" min="-5" max="5" value="0" class="r" step ="0.01"><input type="number" class="n smallInput" value="0" step ="0.01"></div>
+  <div class="sliderBox"><input type="range" min="-5" max="5" value="0" class="r" step ="0.01"><input type="number" class="n smallInput" value="0" step ="0.01"></div>
+  <div class="sliderBox"><input type="range" min="-5" max="5" value="0" class="r" step ="0.01"><input type="number" class="n smallInput" value="0" step ="0.01"></div>
+  <div class="sliderBox"><input type="range" min="-5"" max="5" value="0" class="r" step ="0.01"><input type="number" class="n smallInput" value="0" step ="0.01"></div>
+</div>
+
+<div class="card">
+  <h2>Timers (ms)</h2>
+  <div class="sliderBox"><input type="range" min="0" max="5000" value="1000" class="r"><input type="number" class="n smallInput" value="1000"></div>
+  <div class="sliderBox"><input type="range" min="0" max="5000" value="1000" class="r"><input type="number" class="n smallInput" value="1000"></div>
+  <div class="sliderBox"><input type="range" min="0" max="5000" value="1000" class="r"><input type="number" class="n smallInput" value="1000"></div>
+</div>
+
+<div class="card">
+  <h2>Velocidades</h2>
+
+  <label>Velocidad lineal</label>
+  <div class="sliderBox"><input type="range" min="0" max="255" value="120" class="r"><input type="number" class="n smallInput" value="120"></div>
+
+  <label>Velocidad angular</label>
+  <div class="sliderBox"><input type="range" min="0" max="255" value="120" class="r"><input type="number" class="n smallInput" value="120"></div>
+</div>
+
+<button id="submitBtn" class="submitButton">Submit</button>
+
+<script src="app.js"></script>
+
+</body>
+</html>

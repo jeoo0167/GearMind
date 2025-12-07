@@ -5,6 +5,7 @@
 #include "Sounds.h"
 #include "modeManager.h"
 #include "String"
+#include <ArduinoJson.h>
 
 IMU Imu;
 SMP smp;
@@ -18,15 +19,27 @@ uint8_t mac[6] = {0xF8, 0xB3, 0xB7, 0x20, 0x31, 0x18};
 const int ADCpin = 36;
 
 //--------------------------Timers----------------------------
-unsigned long noneTimer = 5000;
-unsigned long forwardTimer = 2500;
-unsigned long backwardTimer = 10000;
+unsigned long noneTimer;
+unsigned long forwardTimer;
+unsigned long backwardTimer;
+
+const char* ssid;
+const char* password;
+
+StaticJsonDocument<1024> doc;
 
 float GetBatery()
 {
     int raw = analogRead(ADCpin);
     float v = (raw / 4095.0) * 3.3 *2;
     return v;
+}
+
+void loadValues(StaticJsonDocument<1024>& d)
+{
+    File file = LittleFS.open("/config.json", "r");
+    deserializeJson(d, file);
+    file.close();
 }
 
 void setup() {
@@ -38,10 +51,25 @@ void setup() {
     pinMode(ADCpin,INPUT);
     Imu.begin();
 
-    smp.zThreshold[0] = 1.2;
-    smp.zThreshold[1] = -0.88;
-    smp.yThreshold[0] = 0.30;
-    smp.yThreshold[1] = 0.40;
+    if(!LittleFS.begin(true))
+    {
+        Serial.println("LittleFS no montó. Formateando...");
+        LittleFS.format();
+        LittleFS.begin(true);
+    }
+
+    loadValues(doc);
+    smp.zThreshold[0] = doc["thresholds"][0];
+    smp.zThreshold[1] = doc["thresholds"][1];
+    smp.yThreshold[0] = doc["thresholds"][2];
+    smp.yThreshold[1] = doc["thresholds"][3];
+
+    noneTimer = doc["timers"][0];
+    forwardTimer = doc["timers"][1];
+    backwardTimer = doc["timers"][2];   
+   
+    ssid = doc["network"]["ssid"] | "";
+    password = doc["nwtwork"]["password"] | "";
 
     ModeManager::getInstance().setTimers(forwardTimer,backwardTimer);
     /*
@@ -59,21 +87,18 @@ void PlotYPR()
     debug_msgs.plot(xyz,Imu.acc[0],Imu.acc[1],Imu.acc[2]);
     delay(10);
 }
-
-unsigned long startTime = 0;
-bool active = false;
-
+bool flagWifi = false;
 void loop() {
-
+    wifi_mode_t currentWiFiMode = WiFi.getMode();
+    Imu.GetMotion();
+    String direccion = smp.GetMov();
+    
     if(GetBatery() <= 3.3)
     {
         debug_msgs.msg(debug_msgs.WARN, "Batería baja!");
         esp_deep_sleep_start();
     }
 
-    Imu.GetMotion();
-    String direccion = smp.GetMov();
-    
     if(!ModeManager::getInstance().selected)
     {
         ModeManager::getInstance().setMode();
@@ -88,13 +113,19 @@ void loop() {
             ModeManager::getInstance().selected = false;
         }
     }
-    //PlotYPR();
+
+    if(!network_manager.espnowEnable)
+        network_manager.dnsServer.processNextRequest();
+
+    if(ModeManager::getInstance().currentMode == ModeManager::CONFIG && !flagWifi)
+    {
+        network_manager.serverInit(ssid,password);
+        flagWifi = true;
+    }
+
     delay(10);
 }
 
-
-//corregir netwrk manager para modo move
-//trancision move->none
 
 //Mejorar sistema de calibración
 //agregar alarma de deteccion de caidas

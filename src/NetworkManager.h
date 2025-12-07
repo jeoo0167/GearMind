@@ -3,7 +3,12 @@
 
 #include <esp_now.h>
 #include <WiFi.h>
+#include <DNSServer.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
+#include <WiFiUdp.h>
 #include <Arduino.h>
+#include <LittleFS.h>
 #include "DebugMsg.h"
 #include "Imu.h"
 
@@ -31,6 +36,8 @@ public:
 
     NetworkManager();
 
+    void serverInit(const char *ssid,const char *password);
+    bool SendUdp(String udpMessage);
     void Begin(const uint8_t receiverMac[]);
     void Send(const esp_cmd_t *packet, unsigned long data_delay = 50);
     
@@ -39,11 +46,15 @@ public:
     static bool connected;
     unsigned long lastHeartbeat = 0;
 
+    DNSServer dnsServer;
+    bool espnowEnable = true;
+
 private:
     uint8_t mac_addr[6] = {0};
 
     QueueHandle_t msgQueue = nullptr;
     esp_cmd_t msg;
+
     
     DebugMsgs debug_msgs;
     bool macLearned = false;
@@ -59,6 +70,14 @@ private:
     void onReceive(const uint8_t *mac, const uint8_t *data, int len);
     void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
     void MessageHandller(const esp_cmd_t &packet);
+
+    WiFiUDP udp;
+    AsyncWebServer server{80};
+
+    IPAddress apIP = WiFi.softAPIP();
+    int port = 5555;
+    String external_ip;
+    bool msgReceived = false;
 };
 
 #endif
